@@ -1,11 +1,7 @@
 package com.example.layeredarchitecture.controller;
 
-import com.example.layeredarchitecture.BO.CustomerBO;
-import com.example.layeredarchitecture.BO.ItemBO;
-import com.example.layeredarchitecture.BO.impl.CustomerBOImpl;
-import com.example.layeredarchitecture.BO.impl.ItemBOImpl;
-import com.example.layeredarchitecture.dao.custom.ItemDAO;
-import com.example.layeredarchitecture.dao.impl.ItemDAOImpl;
+import com.example.layeredarchitecture.bo.BOFactory;
+import com.example.layeredarchitecture.bo.custom.ItemBO;
 import com.example.layeredarchitecture.model.ItemDTO;
 import com.example.layeredarchitecture.view.tdm.ItemTM;
 import com.jfoenix.controls.JFXButton;
@@ -26,8 +22,10 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 public class ManageItemsFormController {
@@ -41,7 +39,7 @@ public class ManageItemsFormController {
     public TextField txtUnitPrice;
     public JFXButton btnAddNewItem;
 
-    private ItemBO itemBO=new ItemBOImpl();
+    private ItemBO itemBO = (ItemBO) BOFactory.getInstance().getBO(BOFactory.BOTypes.ITEMS);
 
     public void initialize() {
         tblItems.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("code"));
@@ -76,9 +74,10 @@ public class ManageItemsFormController {
     private void loadAllItems() {
         tblItems.getItems().clear();
         try {
-            ArrayList<ItemDTO> allItems=itemBO.getAllItems();
-            for(ItemDTO itemDTO:allItems){
-                tblItems.getItems().add(new ItemTM(itemDTO.getCode(),itemDTO.getDescription(),itemDTO.getUnitPrice(),itemDTO.getQtyOnHand()));
+            /*Get all items*/
+            ArrayList<ItemDTO> allItems = itemBO.getAll();
+            for (ItemDTO item : allItems) {
+                tblItems.getItems().add(new ItemTM(item.getCode(), item.getDescription(), item.getUnitPrice(), item.getQtyOnHand()));
             }
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
@@ -136,8 +135,7 @@ public class ManageItemsFormController {
                 new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
             }
 
-            itemBO.deleteItem(code);
-
+            itemBO.delete(code);
 
             tblItems.getItems().remove(tblItems.getSelectionModel().getSelectedItem());
             tblItems.getSelectionModel().clearSelection();
@@ -176,8 +174,9 @@ public class ManageItemsFormController {
                 if (existItem(code)) {
                     new Alert(Alert.AlertType.ERROR, code + " already exists").show();
                 }
+                //Save Item
+                itemBO.save(new ItemDTO(code, description, unitPrice, qtyOnHand));
 
-                itemBO.saveItem(new ItemDTO(code, description, unitPrice, qtyOnHand));
                 tblItems.getItems().add(new ItemTM(code, description, unitPrice, qtyOnHand));
 
             } catch (SQLException e) {
@@ -191,7 +190,8 @@ public class ManageItemsFormController {
                 if (!existItem(code)) {
                     new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
                 }
-                itemBO.updateItem(new ItemDTO(code, description, unitPrice, qtyOnHand));
+                /*Update Item*/
+                itemBO.update(new ItemDTO(code, description, unitPrice, qtyOnHand));
 
                 ItemTM selectedItem = tblItems.getSelectionModel().getSelectedItem();
                 selectedItem.setDescription(description);
@@ -210,17 +210,31 @@ public class ManageItemsFormController {
 
 
     private boolean existItem(String code) throws SQLException, ClassNotFoundException {
-        return itemBO.existItem(code);
-
+        return itemBO.exists(code);
     }
 
 
     private String generateNewId() {
         try {
-            return itemBO.generateNewItemId();
-        } catch (Exception e) {
+            return itemBO.generateNewId();
+        } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
-        return "I00-001";
+
+        if (tblItems.getItems().isEmpty()) {
+            return "I00-001";
+        } else {
+            String id = getLastItemId();
+            int newItemId = Integer.parseInt(id.replace("I", "")) + 1;
+            return String.format("I00-%03d", newItemId);
+        }
+    }
+
+    private String getLastItemId() {
+        List<ItemTM> tempItemsList = new ArrayList<>(tblItems.getItems());
+        Collections.sort(tempItemsList, (o1, o2) -> o1.getCode().compareTo(o2.getCode()));
+        return tempItemsList.get(tempItemsList.size() - 1).getCode();
     }
 }
