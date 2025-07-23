@@ -1,15 +1,23 @@
 package com.example.layeredarchitecture.model;
 
 public class CustomDTO {
-    //customer related attributes
     private String firstName;
     private String lastName;
-    //order related attributes
     private int orderId;
     private String orderDate;
-    //Item related attributes
-    private int itemId;
+    private String itemId;
     private String itemName;
+
+    public CustomDTO() {}
+
+    public CustomDTO(String firstName, String lastName, int orderId, String orderDate, String itemId, String itemName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.orderId = orderId;
+        this.orderDate = orderDate;
+        this.itemId = itemId;
+        this.itemName = itemName;
+    }
 
     public CustomDTO(String firstName, String lastName, int orderId, String orderDate) {
         this.firstName = firstName;
@@ -18,19 +26,9 @@ public class CustomDTO {
         this.orderDate = orderDate;
     }
 
-    public CustomDTO() {
-    }
-    public CustomDTO(String firstName, int itemId, String itemName) {
-        this.firstName = firstName;
-        this.itemId = itemId;
-        this.itemName = itemName;
-    }
-
-    public CustomDTO(String firstName, String lastName, int orderId, String orderDate, int itemId, String itemName) {
+    public CustomDTO(String firstName, String lastName, String itemId, String itemName) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.orderId = orderId;
-        this.orderDate = orderDate;
         this.itemId = itemId;
         this.itemName = itemName;
     }
@@ -66,4 +64,24 @@ public class CustomDTO {
     public void setOrderDate(String orderDate) {
         this.orderDate = orderDate;
     }
+
+    public String getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+
+
+
 }
